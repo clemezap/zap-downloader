@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Downloader</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f10;
+    --surface: #1a1a1e;
+    --border: #2e2e35;
+    --accent: #4f8ef7;
+    --accent-hover: #6aa3ff;
+    --text: #e8e8ed;
+    --muted: #7a7a8a;
+    --success: #34c77b;
+    --error: #f05151;
+    --warn: #f0a033;
+    --radius: 10px;
+    --font: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+  }
+
+  .header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  .header p {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+    letter-spacing: 0.03em;
+  }
+
+  label {
+    display: block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 0.45rem;
+  }
+
+  input[type="text"],
+  select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  input[type="text"]:focus,
+  select:focus {
+    border-color: var(--accent);
+  }
+
+  select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 10px;
+    padding-right: 2.5rem;
+  }
+
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 0.85rem;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s, transform 0.1s;
+  }
+
+  .btn:active { transform: scale(0.98); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-success {
+    background: var(--success);
+    color: #000;
+    display: none;
+  }
+  .btn-success:hover { filter: brightness(1.1); }
+
+  /* Status bar */
+  .status-bar {
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .status-bar.show { display: flex; }
+  .status-bar.info    { background: #1b2540; border: 1px solid #2b3d6b; color: #8ab4f8; }
+  .status-bar.success { background: #102a1f; border: 1px solid #1f6045; color: var(--success); }
+  .status-bar.error   { background: #2a1010; border: 1px solid #5e1a1a; color: var(--error); }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  /* Cookie notice */
+  .notice {
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  .notice span { color: var(--warn); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>// SOCIAL DOWNLOADER</h1>
+    <p>YouTube · Facebook · Instagram · X &nbsp;—&nbsp; MP4 &amp; MP3 máxima calidad</p>
+  </div>
+
+  <div>
+    <label for="url-input">URL del video / audio</label>
+    <input
+      type="text"
+      id="url-input"
+      placeholder="https://www.youtube.com/watch?v=..."
+      autocomplete="off"
+      spellcheck="false"
+    >
+  </div>
+
+  <div class="row-2">
+    <div>
+      <label for="platform-select">Red social</label>
+      <select id="platform-select">
+        <option value="youtube">YouTube</option>
+        <option value="facebook">Facebook</option>
+        <option value="instagram">Instagram</option>
+        <option value="x">X (Twitter)</option>
+      </select>
+    </div>
+    <div>
+      <label for="format-select">Formato</label>
+      <select id="format-select">
+        <option value="mp4">MP4 — Video</option>
+        <option value="mp3">MP3 — Audio</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="status-bar" class="status-bar">
+    <div id="status-icon"></div>
+    <span id="status-text"></span>
+  </div>
+
+  <button class="btn btn-primary" id="btn-start" onclick="startDownload()">
+    INICIAR DESCARGA
+  </button>
+
+  <button class="btn btn-success" id="btn-save" onclick="saveFile()">
+    ▼ &nbsp;GUARDAR ARCHIVO
+  </button>
+
+  <div class="notice">
+    <span>ℹ</span> Las cookies se leen automáticamente de Chrome, Firefox o Safari.<br>
+    Asegúrate de tener sesión activa en la red social si el contenido es privado.
+  </div>
+</div>
+
+<script>
+  let currentJobId = null;
+  let pollInterval  = null;
+
+  const urlInput      = document.getElementById("url-input");
+  const platformSel   = document.getElementById("platform-select");
+  const formatSel     = document.getElementById("format-select");
+  const btnStart      = document.getElementById("btn-start");
+  const btnSave       = document.getElementById("btn-save");
+  const statusBar     = document.getElementById("status-bar");
+  const statusIcon    = document.getElementById("status-icon");
+  const statusText    = document.getElementById("status-text");
+
+  function setStatus(type, message, spinner = false) {
+    statusBar.className = `status-bar show ${type}`;
+    statusIcon.innerHTML = spinner
+      ? `<div class="spinner"></div>`
+      : `<div class="dot"></div>`;
+    statusText.textContent = message;
+  }
+
+  function hideStatus() {
+    statusBar.className = "status-bar";
+  }
+
+  function resetUI() {
+    btnStart.disabled = false;
+    btnSave.style.display = "none";
+    currentJobId = null;
+    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+  }
+
+  async function startDownload() {
+    const url = urlInput.value.trim();
+    if (!url) {
+      setStatus("error", "Ingresa una URL válida.");
+      return;
+    }
+
+    resetUI();
+    btnStart.disabled = true;
+    btnSave.style.display = "none";
+    setStatus("info", "Iniciando descarga...", true);
+
+    try {
+      const res = await fetch("/api/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url,
+          platform: platformSel.value,
+          format: formatSel.value,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al iniciar la descarga.");
+
+      currentJobId = data.job_id;
+      pollStatus();
+      pollInterval = setInterval(pollStatus, 1500);
+    } catch (err) {
+      setStatus("error", err.message);
+      btnStart.disabled = false;
+    }
+  }
+
+  async function pollStatus() {
+    if (!currentJobId) return;
+    try {
+      const res  = await fetch(`/api/status/${currentJobId}`);
+      const data = await res.json();
+
+      if (data.status === "queued" || data.status === "downloading") {
+        setStatus("info", "Descargando... esto puede tardar un momento.", true);
+        return;
+      }
+
+      if (data.status === "processing") {
+        setStatus("info", "Procesando con ffmpeg (H.264 + faststart)...", true);
+        return;
+      }
+
+      clearInterval(pollInterval);
+      pollInterval = null;
+
+      if (data.status === "done") {
+        setStatus("success", `✓  Listo: ${data.filename}`);
+        btnSave.style.display = "block";
+        btnStart.disabled = false;
+      } else if (data.status === "error") {
+        setStatus("error", `Error: ${data.error}`);
+        btnStart.disabled = false;
+      }
+    } catch {
+      // Red caída transitoria — sigue intentando
+    }
+  }
+
+  function saveFile() {
+    if (!currentJobId) return;
+    window.location.href = `/api/file/${currentJobId}`;
+  }
+</script>
+</body>
+</html>
